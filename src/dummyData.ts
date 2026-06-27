@@ -30,7 +30,12 @@ export const INITIAL_SYSTEM_CONFIG: SystemConfig = {
   ],
   animationStyle: 'Smooth Float',
   animationDuration: 0.5,
-  categories: ['Electronics', 'Fashion', 'Beauty & Skincare', 'Sports & Fitness']
+  categories: ['Electronics', 'Fashion', 'Beauty & Skincare', 'Sports & Fitness'],
+  heroConfig: {
+    title: 'Enterprise Cross-Border Logistics',
+    subtitle: 'Ship products globally with real-time transit telemetry tracking.',
+    imageUrl: 'https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=1200&h=400&q=80'
+  }
 };
 
 export const MOCK_BLOGS: BlogPost[] = [

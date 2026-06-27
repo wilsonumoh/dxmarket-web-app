@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { 
   ShieldCheck, ShieldAlert, Users, Store, Truck, ShoppingBag, Percent, AlertCircle, 
   Settings, Server, ToggleLeft, ToggleRight, ListCollapse, Database, RefreshCw, KeyRound, Terminal,
-  Edit, Trash, Plus, Check, X, Bell, DollarSign, Sparkles
+  Edit, Trash, Plus, Check, X, Bell, DollarSign, Sparkles, Menu
 } from 'lucide-react';
 import { Product, MerchantStore, Supplier, Order, AuditLog, SystemConfig, User, UserRole } from '../types';
 import CMSDashboard from './CMSDashboard';
+import MenuManager from './admin/MenuManager';
+import ContentManager from './admin/ContentManager';
 
 interface AdminPortalsProps {
   role: 'admin' | 'superadmin';
@@ -43,6 +45,7 @@ export default function AdminPortals({
   formatPrice,
 }: AdminPortalsProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [siteContentTab, setSiteContentTab] = useState<'hero' | 'menu'>('hero');
 
   // Format helper
   const format = formatPrice || ((usd: number) => `$${usd.toFixed(2)}`);
@@ -465,6 +468,7 @@ export default function AdminPortals({
         <p className="px-3 py-1.5 text-[10px] uppercase font-black text-slate-400 tracking-wider pt-4">Platform Operations</p>
         {[
           { id: 'app-content', label: 'App Content & Layout', icon: <Settings className="w-4 h-4" /> },
+          { id: 'site-content', label: 'Site Content', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
           { id: 'catalog-categories', label: 'Manage Categories', icon: <ListCollapse className="w-4 h-4" /> },
           { id: 'user-directory', label: 'User Directory', icon: <Users className="w-4 h-4" /> },
           { id: 'transactions', label: 'Ledger & Escrow', icon: <Database className="w-4 h-4" /> },
@@ -794,6 +798,51 @@ export default function AdminPortals({
             setProducts={setProducts}
             formatPrice={format}
           />
+        )}
+
+        {/* TAB: SITE CONTENT */}
+        {activeTab === 'site-content' && (
+          <div className="space-y-6">
+            {/* Toggle tabs */}
+            <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-md">
+              <button
+                type="button"
+                onClick={() => setSiteContentTab('hero')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  siteContentTab === 'hero'
+                    ? 'bg-white text-[#0F4C81] shadow-sm font-black'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Homepage Hero Config</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSiteContentTab('menu')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  siteContentTab === 'menu'
+                    ? 'bg-white text-[#0F4C81] shadow-sm font-black'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Menu className="w-4 h-4 text-[#0F4C81]" />
+                <span>Navigation Menu Manager</span>
+              </button>
+            </div>
+
+            {siteContentTab === 'hero' ? (
+              <ContentManager
+                systemConfig={systemConfig}
+                setSystemConfig={setSystemConfig}
+              />
+            ) : (
+              <MenuManager
+                systemConfig={systemConfig}
+                setSystemConfig={setSystemConfig}
+              />
+            )}
+          </div>
         )}
 
         {/* TAB: CATEGORIES MANAGEMENT */}

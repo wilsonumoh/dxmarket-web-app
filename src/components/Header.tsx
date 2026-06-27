@@ -145,7 +145,6 @@ export default function Header({
 
           {/* Currency dropdown */}
           <div className="flex items-center gap-1 cursor-pointer hover:text-gray-200">
-            <DollarSign className="w-3 h-3 text-emerald-400" />
             <select 
               value={currentCurrency} 
               onChange={(e) => setCurrency(e.target.value)}
@@ -431,15 +430,24 @@ export default function Header({
             </div>
 
             {/* Dynamic Menu items managed by Admin */}
-            {systemConfig.appMenu.map((item, index) => (
-              <button 
-                key={index} 
-                onClick={() => onNavigate(item.view)} 
-                className="hover:text-[#0F4C81] cursor-pointer"
-              >
-                {item.label}
-              </button>
-            ))}
+            {systemConfig.appMenu.map((item, index) => {
+              const isExternal = item.view.startsWith('http://') || item.view.startsWith('https://') || item.view.startsWith('/');
+              return (
+                <button 
+                  key={index} 
+                  onClick={() => {
+                    if (isExternal) {
+                      window.open(item.view, '_blank', 'noopener,noreferrer');
+                    } else {
+                      onNavigate(item.view);
+                    }
+                  }} 
+                  className="hover:text-[#0F4C81] cursor-pointer text-xs font-semibold"
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="py-2 text-[11px] text-gray-500 font-medium">

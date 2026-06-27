@@ -184,4 +184,9 @@ export interface SystemConfig {
   animationDuration: number;
   categories: string[];
   featuredProductIds?: string[];
+  heroConfig?: {
+    title: string;
+    subtitle: string;
+    imageUrl: string;
+  };
 }

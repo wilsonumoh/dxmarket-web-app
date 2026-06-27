@@ -87,33 +87,44 @@ export default function PublicPages({
 
   // Carousel slider state for homepage (Dynamic from Admin Configs!)
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = systemConfig.heroBanners && systemConfig.heroBanners.length > 0
-    ? systemConfig.heroBanners.map(b => ({
-        title: b.title,
-        desc: b.subtitle,
-        image: b.imageUrl,
-        action: b.buttonText || 'Explore',
-        category: 'All',
-        view: b.buttonView || 'products'
-      }))
-    : [
+  const slides = systemConfig.heroConfig && systemConfig.heroConfig.title
+    ? [
         {
-          title: 'Upgrade Your Digital Space',
-          desc: 'Get exclusive deals on 34" curved monitors and Active ANC workspace audio gear.',
-          image: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=1400&q=80',
-          action: 'Shop Electronics',
-          category: 'Electronics',
-          view: 'products'
-        },
-        {
-          title: 'Timeless Cashmere & Tailored Styles',
-          desc: 'Explore organic cotton blends and double-breasted cashmere overcoats from elite boutiques.',
-          image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1400&q=80',
-          action: 'Browse Fashion',
-          category: 'Fashion',
+          title: systemConfig.heroConfig.title,
+          desc: systemConfig.heroConfig.subtitle || '',
+          image: systemConfig.heroConfig.imageUrl || 'https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=1200&h=400&q=80',
+          action: 'Explore Showcase',
+          category: 'All',
           view: 'products'
         }
-      ];
+      ]
+    : systemConfig.heroBanners && systemConfig.heroBanners.length > 0
+      ? systemConfig.heroBanners.map(b => ({
+          title: b.title,
+          desc: b.subtitle,
+          image: b.imageUrl,
+          action: b.buttonText || 'Explore',
+          category: 'All',
+          view: b.buttonView || 'products'
+        }))
+      : [
+          {
+            title: 'Upgrade Your Digital Space',
+            desc: 'Get exclusive deals on 34" curved monitors and Active ANC workspace audio gear.',
+            image: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=1400&q=80',
+            action: 'Shop Electronics',
+            category: 'Electronics',
+            view: 'products'
+          },
+          {
+            title: 'Timeless Cashmere & Tailored Styles',
+            desc: 'Explore organic cotton blends and double-breasted cashmere overcoats from elite boutiques.',
+            image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1400&q=80',
+            action: 'Browse Fashion',
+            category: 'Fashion',
+            view: 'products'
+          }
+        ];
 
   useEffect(() => {
     if (view === 'home' && slides.length > 0) {
@@ -217,6 +228,16 @@ export default function PublicPages({
     const trendingList = products.filter(p => p.isTrending && p.isApproved);
     const flashList = products.filter(p => p.isFlashSale && p.isApproved);
 
+    const adminProducts = products.filter(p => 
+      p.isApproved && 
+      (p.merchantId === 'admin' || 
+       p.merchantName?.toLowerCase().includes('admin') || 
+       p.merchantName?.toLowerCase().includes('administration'))
+    );
+    const displayAdminProducts = adminProducts.length >= 6 
+      ? adminProducts.slice(0, 6) 
+      : [...adminProducts, ...products.filter(p => p.isApproved && !adminProducts.some(ap => ap.id === p.id))].slice(0, 6);
+
     return (
       <div className="space-y-12" id="homepage-view">
         {/* Hero Slider */}
@@ -306,6 +327,81 @@ export default function PublicPages({
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Administration Curated Products Section */}
+        <section id="homepage-admin-products" className="space-y-6">
+          <div className="flex justify-between items-end mb-6">
+            <div>
+              <h2 className="text-xl md:text-2xl font-extrabold text-[#0F4C81] tracking-tight flex items-center gap-2">
+                <span>🛡️</span>
+                <span>Curated Products from Administration</span>
+              </h2>
+              <p className="text-xs text-gray-500">Official curated releases direct from platform headquarters and vetted manufacturers.</p>
+            </div>
+            <button onClick={() => onNavigate('products')} className="text-xs font-bold text-[#1E88E5] hover:underline flex items-center gap-1">
+              <span>View All Products</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {displayAdminProducts.map((product) => (
+              <div key={product.id} className={`bg-white border border-gray-100 rounded-xl overflow-hidden flex flex-col group ${getAnimationClass()}`}>
+                <div className="relative pt-[70%] overflow-hidden bg-gray-50">
+                  <button
+                    onClick={() => onToggleWishlist(product)}
+                    className="absolute top-2.5 right-2.5 z-10 bg-white/85 hover:bg-white p-1.5 rounded-full shadow hover:text-rose-500 transition cursor-pointer"
+                  >
+                    <Heart className={`w-4 h-4 ${wishlist.some(w => w.id === product.id) ? 'fill-rose-500 text-rose-500' : 'text-gray-500'}`} />
+                  </button>
+                  <img src={product.image} alt={product.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                </div>
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                      <span>{product.brand}</span>
+                      <span className="text-emerald-600 flex items-center gap-0.5"><ShieldCheck className="w-3.5 h-3.5" /> Verified</span>
+                    </div>
+                    <h3 onClick={() => onNavigate('product-details', { product })} className="font-bold text-sm text-gray-900 line-clamp-1 hover:text-[#1E88E5] cursor-pointer mt-0.5">
+                      {product.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex text-amber-400">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'fill-current' : 'opacity-30'}`} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-gray-500 font-medium">({product.reviewsCount})</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-base font-extrabold text-[#0F4C81]">{format(product.price)}</span>
+                    </div>
+                    <button
+                      onClick={() => onAddToCart(product, 1, product.selectedVariant || {})}
+                      className="bg-gray-100 hover:bg-[#0F4C81] hover:text-white text-[#0F4C81] p-2 rounded-lg cursor-pointer transition"
+                      title="Add to Cart"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => onNavigate('products')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs border border-slate-200 hover:border-[#0F4C81] hover:text-[#0F4C81] bg-white hover:bg-slate-50 transition cursor-pointer shadow-sm"
+            >
+              <span>Explore More Products Uploaded by Administration</span>
+              <ArrowRight className="w-4 h-4 text-[#0F4C81]" />
+            </button>
           </div>
         </section>
 
