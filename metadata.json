@@ -1,0 +1,6 @@
+{
+  "name": "DXMARKET",
+  "description": "Enterprise Multi-Vendor E-Commerce Marketplace with customer, merchant, supplier, sales, admin, and super-admin portals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

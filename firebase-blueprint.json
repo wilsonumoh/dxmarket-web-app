@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "SystemConfig": {
+      "title": "System Configuration",
+      "description": "Global marketplace system configuration, menus, banners, and featured products",
+      "type": "object",
+      "properties": {
+        "commissionRate": {
+          "type": "number",
+          "description": "Commission rate for platform transactions"
+        },
+        "platformName": {
+          "type": "string",
+          "description": "Name of the platform"
+        },
+        "maintenanceMode": {
+          "type": "boolean",
+          "description": "Whether maintenance mode is active"
+        },
+        "allowSelfRegistration": {
+          "type": "boolean",
+          "description": "Whether merchants can self-register"
+        },
+        "enable2FA": {
+          "type": "boolean",
+          "description": "Whether two-factor authentication is enabled"
+        },
+        "currencies": {
+          "type": "array",
+          "description": "List of supported currencies"
+        },
+        "languages": {
+          "type": "array",
+          "description": "List of supported languages"
+        },
+        "heroTitle": {
+          "type": "string",
+          "description": "Title text on the home page hero section"
+        },
+        "heroDescription": {
+          "type": "string",
+          "description": "Description text on the home page hero section"
+        },
+        "footerNote": {
+          "type": "string",
+          "description": "Footer copyright or note text"
+        },
+        "appMenu": {
+          "type": "array",
+          "description": "Customized header navigation menu links"
+        },
+        "heroBanners": {
+          "type": "array",
+          "description": "List of promotional sliders shown on the homepage"
+        },
+        "animationStyle": {
+          "type": "string",
+          "description": "Visual presentation and animation theme"
+        },
+        "animationDuration": {
+          "type": "number",
+          "description": "Animation transition duration"
+        },
+        "categories": {
+          "type": "array",
+          "description": "Product categories list"
+        },
+        "featuredProductIds": {
+          "type": "array",
+          "description": "List of product IDs featured on the homepage"
+        }
+      },
+      "required": [
+        "platformName",
+        "appMenu",
+        "heroBanners"
+      ]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": "SystemConfig",
+      "description": "Stores global system configurations and settings"
+    }
+  }
+}

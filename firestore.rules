@@ -1,0 +1,214 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user has a specific role
+    function hasRole(role) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    // Check if user is an admin or superadmin
+    function isAdmin() {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+      );
+    }
+
+    // Match users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+
+    // Match roles & permissions
+    match /roles/{roleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /permissions/{permissionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Match products
+    match /products/{productId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAuthenticated() && (
+        hasRole('merchant') || hasRole('merchant_staff') || isAdmin()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.merchantId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.storeId == resource.data.storeId
+      );
+    }
+
+    // Match categories and brands
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() || hasRole('regional_manager');
+    }
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin() || hasRole('regional_manager') || hasRole('merchant');
+    }
+
+    // Match stores & merchants
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
+    }
+    match /merchants/{merchantId} {
+      allow read: if true;
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == merchantId);
+    }
+    match /suppliers/{supplierId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == supplierId);
+    }
+
+    // Match customers
+    match /customers/{customerId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == customerId);
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == customerId);
+    }
+
+    // Match orders and order items
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.merchantId == request.auth.uid ||
+        hasRole('delivery_agent')
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.merchantId == request.auth.uid || 
+        hasRole('delivery_agent')
+      );
+      allow delete: if isAdmin();
+    }
+    match /order_items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Match payments, wallets & transactions
+    match /payments/{paymentId} {
+      allow read, write: if isAdmin() || isAuthenticated();
+    }
+    match /wallets/{walletId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Match reviews & ratings
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Match wishlists & carts
+    match /wishlists/{wishlistId} {
+      allow read, write: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+    match /carts/{cartId} {
+      allow read, write: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // Match inventory & stock movements
+    match /inventory/{inventoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || hasRole('merchant') || hasRole('merchant_staff') || hasRole('supplier');
+    }
+    match /stock_movements/{movementId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || hasRole('merchant') || hasRole('supplier');
+    }
+
+    // Match shipments, returns, refunds
+    match /shipments/{shipmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || hasRole('delivery_agent') || hasRole('merchant');
+    }
+    match /returns/{returnId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /refunds/{refundId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Match coupons & promotions
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin() || hasRole('merchant') || hasRole('salesperson');
+    }
+    match /promotions/{promoId} {
+      allow read: if true;
+      allow write: if isAdmin() || hasRole('merchant') || hasRole('salesperson');
+    }
+
+    // Match notifications & messages & support tickets
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.recipientId == request.auth.uid);
+      allow write: if isAdmin() || isAuthenticated();
+    }
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientId == request.auth.uid ||
+        hasRole('support_agent')
+      );
+      allow create: if isAuthenticated();
+    }
+    match /tickets/{ticketId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.userId == request.auth.uid || 
+        hasRole('support_agent')
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        hasRole('support_agent')
+      );
+    }
+
+    // Match audit_logs, settings & reports
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Audit logs are read-only
+    }
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /reports/{reportId} {
+      allow read: if isAdmin() || hasRole('regional_manager') || hasRole('merchant');
+      allow write: if isAdmin();
+    }
+  }
+}
