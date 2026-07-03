@@ -185,12 +185,37 @@ When testing or deploying DXMARKET on **Cloudflare Pages** via GitHub Git integr
 1. **NODE_ENV=production Skipping Build Tools**: Cloudflare CI sets `NODE_ENV=production` by default during installation, which ignores `devDependencies`. All essential build compilers (`esbuild`, `tailwindcss`, `@tailwindcss/vite`, `@vitejs/plugin-react`, `typescript`, `tsx`, `vite`) have been moved to `"dependencies"` in `package.json`.
 2. **Node.js Version Compatibility**: Cloudflare Pages can default to older Node runtimes that fail with Vite 6 and Tailwind v4. We have added `.node-version` and `.nvmrc` files specifying `20` to guarantee Node.js 20+ execution.
 3. **SPA Routing Fallback**: We created `public/_redirects` (`/* /index.html 200`) and `public/_routes.json` so Cloudflare's edge CDN cleanly routes deep links (such as `/sample-users` and portal dashboards) back to the React SPA without 404 errors.
-4. **Clean Static Build Target**: We added dedicated scripts (`npm run pages:build` and `npm run build:cloudflare`) and a `wrangler.toml` file configured for output directory `dist`.
+4. **Clean Static Build Target & Wrangler Command Compatibility**: We added `assets = "./dist"` and `pages_build_output_dir = "dist"` to `wrangler.toml` and created dedicated deployment scripts (`npm run deploy`, `npm run pages:deploy`, and `npm run pages:build`).
+
+---
+
+### ⚠️ IMPORTANT: Solving the `wrangler deploy` vs `wrangler pages deploy` Warning & Error
+If you see the error:
+```
+[WARNING] It seems that you have run wrangler deploy on a Pages project, wrangler pages deploy should be used instead.
+✘ [ERROR] Missing entry-point to Worker script or to assets directory
+```
+**Why this happens:**
+In Cloudflare's CLI (`wrangler`), there are two distinct deployment commands:
+*   `wrangler pages deploy <dir>` → The correct command for **Cloudflare Pages** projects.
+*   `wrangler deploy` → The command for **Cloudflare Workers** (or Workers with Static Assets).
+
+When `wrangler deploy` is executed on a repository containing `pages_build_output_dir`, Wrangler warns that you are running a Workers deploy command on a Pages project. When prompted to proceed anyway, it looks for a Worker script entry-point (`main = ...`) and fails if missing.
+
+**How we solved this:**
+1. **Direct NPM Scripts**: Always deploy from your terminal using our pre-configured script:
+   ```bash
+   npm run deploy
+   ```
+   *(This automatically executes `vite build && npx wrangler pages deploy dist`).*
+2. **Wrangler.toml Asset Fallback**: We have added `assets = "./dist"` to `wrangler.toml`. This ensures that even if you or an automated CI pipeline explicitly calls `npx wrangler deploy` instead of `wrangler pages deploy`, Wrangler will locate the static assets in `./dist` and deploy without throwing an error.
+
+---
 
 ### Cloudflare Pages Dashboard Configuration:
-When connecting your GitHub repo in the Cloudflare dashboard, enter:
+When connecting your GitHub repo in the Cloudflare Pages dashboard, enter:
 *   **Framework Preset**: None / Vite / React
-*   **Build command**: `npm run pages:build` (or `npm run build:cloudflare`)
+*   **Build command**: `npm run pages:build` (or `vite build`) — **DO NOT** enter `wrangler deploy` or `npm run deploy` here, as Cloudflare Pages' own CI automatically uploads the output directory after building!
 *   **Build output directory**: `dist`
 *   **Root directory**: `/` (leave empty or set to root)
 *   **Environment Variables**: Add `NODE_VERSION` = `20.18.0` (optional, redundant with `.nvmrc`).

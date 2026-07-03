@@ -9,6 +9,7 @@
     "build:cloudflare": "vite build",
     "pages:build": "vite build",
     "pages:deploy": "vite build && npx wrangler pages deploy dist",
+    "deploy": "vite build && npx wrangler pages deploy dist",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
