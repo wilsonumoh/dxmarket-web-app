@@ -174,3 +174,24 @@ If your Namecheap hosting includes SSH command access, launch your server with P
 pm2 start dist/server.cjs --name "dxmarket-prod"
 pm2 save
 ```
+
+---
+
+## 6. CLOUDFLARE PAGES / GITHUB GIT INTEGRATION DEPLOYMENT
+
+When testing or deploying DXMARKET on **Cloudflare Pages** via GitHub Git integration, follow these exact settings to prevent `Failed: error occurred while running deploy command`:
+
+### Root Causes & Fixes Applied in Codebase:
+1. **NODE_ENV=production Skipping Build Tools**: Cloudflare CI sets `NODE_ENV=production` by default during installation, which ignores `devDependencies`. All essential build compilers (`esbuild`, `tailwindcss`, `@tailwindcss/vite`, `@vitejs/plugin-react`, `typescript`, `tsx`, `vite`) have been moved to `"dependencies"` in `package.json`.
+2. **Node.js Version Compatibility**: Cloudflare Pages can default to older Node runtimes that fail with Vite 6 and Tailwind v4. We have added `.node-version` and `.nvmrc` files specifying `20` to guarantee Node.js 20+ execution.
+3. **SPA Routing Fallback**: We created `public/_redirects` (`/* /index.html 200`) and `public/_routes.json` so Cloudflare's edge CDN cleanly routes deep links (such as `/sample-users` and portal dashboards) back to the React SPA without 404 errors.
+4. **Clean Static Build Target**: We added dedicated scripts (`npm run pages:build` and `npm run build:cloudflare`) and a `wrangler.toml` file configured for output directory `dist`.
+
+### Cloudflare Pages Dashboard Configuration:
+When connecting your GitHub repo in the Cloudflare dashboard, enter:
+*   **Framework Preset**: None / Vite / React
+*   **Build command**: `npm run pages:build` (or `npm run build:cloudflare`)
+*   **Build output directory**: `dist`
+*   **Root directory**: `/` (leave empty or set to root)
+*   **Environment Variables**: Add `NODE_VERSION` = `20.18.0` (optional, redundant with `.nvmrc`).
+
