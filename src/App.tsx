@@ -4,6 +4,7 @@ import PublicPages from './components/PublicPages';
 import AuthPages from './components/AuthPages';
 import PortalPages from './components/PortalPages';
 import AdminPortals from './components/AdminPortals';
+import SampleUsers from './components/SampleUsers';
 import { doc, onSnapshot, setDoc, getDocFromServer } from 'firebase/firestore';
 import { db, OperationType, handleFirestoreError } from './lib/firebaseClient';
 
@@ -176,9 +177,23 @@ export default function App() {
         <AuthPages
           initialView={currentView}
           onNavigate={handleNavigate}
-          onSuccess={(name, email) => {
-            setRole('customer');
-            handleNavigate('home');
+          onSuccess={(name, email, newRole, targetView) => {
+            const roleToSet = (newRole as any) || 'customer';
+            setRole(roleToSet);
+            handleNavigate(targetView || `${roleToSet}-dashboard`);
+          }}
+        />
+      );
+    }
+
+    // 1.5 Check if Sample Users Hub view
+    if (currentView === 'sample-users') {
+      return (
+        <SampleUsers
+          onNavigate={handleNavigate}
+          onLogin={(name, email, role, targetView) => {
+            setRole((role as any) || 'customer');
+            handleNavigate(targetView || `${role}-dashboard`);
           }}
         />
       );
@@ -192,6 +207,7 @@ export default function App() {
         return (
           <AdminPortals
             role={extractedRole}
+            view={currentView}
             onNavigate={handleNavigate}
             products={products}
             setProducts={setProducts}
@@ -235,12 +251,15 @@ export default function App() {
       );
     }
 
-    // 3. Fallback: Customer sub-navigation portals mapping
-    if (currentView.startsWith('customer-')) {
-      const subTab = currentView.replace('customer-', '');
+    // 3. Fallback: Portal sub-navigation mapping
+    if (currentView.startsWith('customer-') || 
+        (currentView.startsWith('merchant-') && currentView !== 'merchant-stores' && currentView !== 'merchant-storefront') ||
+        currentView.startsWith('supplier-') || 
+        currentView.startsWith('sales-')) {
+      const extractedRole = currentView.split('-')[0] as 'customer' | 'merchant' | 'supplier' | 'sales';
       return (
         <PortalPages
-          role="customer"
+          role={extractedRole}
           view={currentView}
           onNavigate={handleNavigate}
           products={products}
@@ -258,6 +277,30 @@ export default function App() {
           leads={leads}
           setLeads={setLeads}
           systemConfig={systemConfig}
+          formatPrice={formatPrice}
+        />
+      );
+    }
+
+    if (currentView.startsWith('admin-') || currentView.startsWith('superadmin-')) {
+      const extractedRole = currentView.split('-')[0] as 'admin' | 'superadmin';
+      return (
+        <AdminPortals
+          role={extractedRole}
+          view={currentView}
+          onNavigate={handleNavigate}
+          products={products}
+          setProducts={setProducts}
+          merchants={merchants}
+          setMerchants={setMerchants}
+          suppliers={suppliers}
+          setSuppliers={setSuppliers}
+          orders={orders}
+          setOrders={setOrders}
+          auditLogs={auditLogs}
+          setAuditLogs={setAuditLogs}
+          systemConfig={systemConfig}
+          setSystemConfig={setSystemConfig}
           formatPrice={formatPrice}
         />
       );

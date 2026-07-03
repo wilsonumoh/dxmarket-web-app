@@ -11,6 +11,7 @@ import ContentManager from './admin/ContentManager';
 
 interface AdminPortalsProps {
   role: 'admin' | 'superadmin';
+  view?: string;
   onNavigate: (view: string) => void;
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
@@ -29,6 +30,7 @@ interface AdminPortalsProps {
 
 export default function AdminPortals({
   role,
+  view,
   onNavigate,
   products,
   setProducts,
@@ -46,6 +48,20 @@ export default function AdminPortals({
 }: AdminPortalsProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [siteContentTab, setSiteContentTab] = useState<'hero' | 'menu'>('hero');
+
+  React.useEffect(() => {
+    if (view) {
+      if (view.startsWith('admin-')) {
+        const tab = view.replace('admin-', '');
+        setActiveTab(tab);
+      } else if (view.startsWith('superadmin-')) {
+        const tab = view.replace('superadmin-', '');
+        setActiveTab(tab);
+      } else if (view.endsWith('-dashboard')) {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [view]);
 
   // Format helper
   const format = formatPrice || ((usd: number) => `$${usd.toFixed(2)}`);
@@ -381,9 +397,14 @@ export default function AdminPortals({
           ? (o.trackingSteps || []).filter(s => s.status !== 'Escrow Funds Disbursed')
           : [...(o.trackingSteps || []), { status: 'Escrow Funds Disbursed', date: new Date().toISOString().split('T')[0], location: 'Central Clearing', description: 'Escrow funds officially cleared and disbursed to Merchant Wallet.' }];
         
+        const updatedLogs = current
+          ? (o.trackingLogs || []).filter(l => l.status !== 'Escrow Funds Disbursed')
+          : [...(o.trackingLogs || []), { id: `escrow-${Date.now()}`, status: 'Escrow Funds Disbursed', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), location: 'Central Escrow Clearing', description: 'Escrow funds officially cleared and disbursed to Merchant Wallet.', completed: true, isCurrent: false }];
+
         return {
           ...o,
-          trackingSteps: updatedSteps
+          trackingSteps: updatedSteps,
+          trackingLogs: updatedLogs
         };
       }
       return o;

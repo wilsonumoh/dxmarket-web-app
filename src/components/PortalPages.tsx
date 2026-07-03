@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { 
   CreditCard, MapPin, Trash2, Heart, ShoppingBag, Truck, Bell, Award, Wallet, 
   MessageSquare, Star, Plus, Edit, Send, Sparkles, Check, TrendingUp, AlertTriangle, 
-  User, CheckCircle, Clock, Package, DollarSign, Store, Users, FileText, ChevronRight, BadgePercent, Settings
+  User, CheckCircle, Clock, Package, DollarSign, Store, Users, FileText, ChevronRight, BadgePercent, Settings,
+  Activity, ShieldCheck, Box, Globe, CheckCircle2
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Product, CartItem, Order, MerchantStore, Supplier, Lead, Coupon, SystemConfig } from '../types';
 
 interface PortalPagesProps {
@@ -53,6 +55,30 @@ export default function PortalPages({
 
   // Navigation tabs helper
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedOrderToTrack, setSelectedOrderToTrack] = useState<string>(orders[0]?.id || 'ord-1001');
+
+  React.useEffect(() => {
+    if (view) {
+      if (view.startsWith('customer-')) {
+        const tab = view.replace('customer-', '');
+        if (tab === 'checkout') setActiveTab('cart');
+        else setActiveTab(tab);
+      } else if (view.startsWith('merchant-')) {
+        const tab = view.replace('merchant-', '');
+        setActiveTab(tab);
+      } else if (view.startsWith('supplier-')) {
+        const tab = view.replace('supplier-', '');
+        setActiveTab(tab);
+      } else if (view.startsWith('sales-')) {
+        const tab = view.replace('sales-', '');
+        setActiveTab(tab);
+      } else if (view.endsWith('-dashboard')) {
+        setActiveTab('dashboard');
+      } else if (view === 'track-order' || view === 'customer-track-order') {
+        setActiveTab('track-order');
+      }
+    }
+  }, [view]);
 
   // Customer states
   const [couponCode, setCouponCode] = useState('');
@@ -146,10 +172,24 @@ export default function PortalPages({
         merchantId: item.product.merchantId
       })),
       total: finalTotal,
-      status: 'Pending',
+      status: 'Processing',
+      shippingStatus: 'Processing',
       date: new Date().toISOString().split('T')[0],
       shippingAddress: addresses.find(a => a.id === selectedAddr)?.address || 'Address Not Provided',
-      paymentMethod: selectedPay === 'wallet' ? 'Wallet Balance' : 'Saved Credit Card'
+      paymentMethod: selectedPay === 'wallet' ? 'Wallet Balance' : 'Saved Credit Card',
+      trackingNumber: `DX-${Math.floor(100000 + Math.random() * 900000)}-USA`,
+      trackingLogs: [
+        { id: 1, status: 'Order Authorized', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), location: 'Payment Gateway Clearing', description: 'Order successfully created and escrow secured.', completed: true },
+        { id: 2, status: 'Warehouse Packaging', timestamp: 'In Progress', location: 'ApexTech Warehouse #3, CA', description: 'Automated sorting and merchant packaging initiated.', completed: true, isCurrent: true },
+        { id: 3, status: 'Departed Facility', timestamp: 'Pending', location: 'Logistics Sort Hub', description: 'Awaiting export dispatch.', completed: false },
+        { id: 4, status: 'In Transit', timestamp: 'Pending', location: 'Regional Sort Center', description: 'Inter-facility transfer.', completed: false },
+        { id: 5, status: 'Out for Delivery', timestamp: 'Pending', location: 'Local Delivery Fleet', description: 'Assigned to courier van.', completed: false },
+        { id: 6, status: 'Delivered', timestamp: 'Pending', location: addresses.find(a => a.id === selectedAddr)?.address || 'Destination', description: 'Recipient signature required.', completed: false }
+      ],
+      trackingSteps: [
+        { status: 'Order Placed', date: new Date().toISOString().slice(0, 16).replace('T', ' '), location: 'System', description: 'Order created and payment verified.' },
+        { status: 'Processing', date: new Date().toISOString().slice(0, 16).replace('T', ' '), location: 'Warehouse 3', description: 'Fulfillment packaging initiated.' }
+      ]
     };
 
     // Decrement stock levels
@@ -313,6 +353,7 @@ export default function PortalPages({
             { id: 'dashboard', label: 'Dashboard', icon: <TrendingUp className="w-4 h-4" /> },
             { id: 'cart', label: 'Cart Checkout', icon: <ShoppingBag className="w-4 h-4" /> },
             { id: 'orders', label: 'My Orders', icon: <Truck className="w-4 h-4" /> },
+            { id: 'track-order', label: 'Track My Order', icon: <MapPin className="w-4 h-4 text-blue-500 animate-bounce" /> },
             { id: 'wishlist', label: 'Saved Wishlist', icon: <Heart className="w-4 h-4" /> },
             { id: 'wallet', label: 'Wallet Ledger', icon: <Wallet className="w-4 h-4" /> },
             { id: 'addresses', label: 'Address Book', icon: <MapPin className="w-4 h-4" /> },
@@ -608,15 +649,71 @@ export default function PortalPages({
                         <p className="font-extrabold text-xs text-gray-800">Order Token: #{order.id}</p>
                         <p className="text-[10px] text-gray-400">Dispatched: {order.date} | Total Invoice: ${order.total.toFixed(2)}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded font-bold text-[10px] self-start sm:self-auto ${
-                        order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        STATUS: {order.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] self-start sm:self-auto border ${
+                          (order.shippingStatus === 'Delivered' || order.status === 'Delivered') 
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                            : order.shippingStatus === 'Out for Delivery' 
+                              ? 'bg-blue-100 text-blue-800 border-blue-300 animate-pulse'
+                              : 'bg-amber-100 text-amber-800 border-amber-300'
+                        }`}>
+                          LOGISTICS: {order.shippingStatus?.toUpperCase() || order.status.toUpperCase()}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedOrderToTrack(order.id);
+                            setActiveTab('track-order');
+                          }}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3 py-1 rounded text-[10px] font-extrabold shadow transition flex items-center gap-1 cursor-pointer animate-pulse"
+                        >
+                          <Truck className="w-3 h-3" />
+                          <span>Live Map Track 📍</span>
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Interactive Tracking Steps */}
-                    {order.trackingSteps ? (
+                    {/* Interactive Tracking Steps Summary */}
+                    {(order.trackingLogs && order.trackingLogs.length > 0) ? (
+                      <div className="bg-slate-50/90 p-4 rounded-xl border border-slate-200/80 space-y-3.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-[#0F4C81] uppercase tracking-wider flex items-center gap-1.5">
+                            <Truck className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Live Logistics Progression & GPS Checkpoints:</span>
+                          </p>
+                          <span className="text-[10px] font-bold text-gray-500">
+                            {order.trackingLogs.filter(l => l.completed).length} of {order.trackingLogs.length} Checkpoints Cleared
+                          </span>
+                        </div>
+                        <div className="relative pl-5 border-l-2 border-blue-500 space-y-4 text-xs">
+                          {order.trackingLogs.map((log, idx) => (
+                            <div key={idx} className="relative">
+                              <span className={`absolute -left-[23px] top-1 w-3 h-3 rounded-full border-2 border-white ${
+                                log.isCurrent ? 'bg-blue-600 ring-4 ring-blue-500/30 animate-pulse' : log.completed ? 'bg-emerald-500' : 'bg-gray-300'
+                              }`} />
+                              <div className="flex flex-wrap justify-between items-center text-gray-800 gap-2">
+                                <span className={`font-extrabold flex items-center gap-1.5 ${log.isCurrent ? 'text-blue-600 font-black' : log.completed ? 'text-gray-900' : 'text-gray-400'}`}>
+                                  <span>{log.status}</span>
+                                  {log.isCurrent && <span className="bg-blue-100 text-blue-700 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">Active Stage</span>}
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{log.timestamp}</span>
+                                </span>
+                              </div>
+                              <p className={`text-[11px] font-medium mt-0.5 ${log.isCurrent ? 'text-gray-800' : 'text-gray-500'}`}>
+                                {log.description}
+                              </p>
+                              {log.location && (
+                                <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-1 bg-emerald-50/80 inline-flex px-2 py-0.5 rounded border border-emerald-200/60">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span>{log.location}</span>
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : order.trackingSteps ? (
                       <div className="bg-gray-50 p-4 rounded-lg space-y-3.5">
                         <p className="text-[10px] font-bold text-[#0F4C81] uppercase tracking-wider">Tracking Route:</p>
                         <div className="relative pl-4 border-l-2 border-blue-500 space-y-4 text-xs">
@@ -640,6 +737,228 @@ export default function PortalPages({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* TAB: TRACK MY ORDER (ANIMATED VISUAL TIMELINE) */}
+          {activeTab === 'track-order' && (
+            <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-8 shadow-sm" id="customer-track-order">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="font-black text-lg text-[#0F4C81] flex items-center gap-2">
+                    <Truck className="w-6 h-6 text-blue-600 animate-bounce" />
+                    <span>Interactive Order Logistics & Live Tracking</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Real-time GPS courier telemetry and timeline milestone animation.</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-500">Select Order:</span>
+                  <select
+                    value={selectedOrderToTrack}
+                    onChange={(e) => setSelectedOrderToTrack(e.target.value)}
+                    className="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg px-3 py-1.5 font-bold focus:ring-2 focus:ring-[#1E88E5] focus:outline-none"
+                  >
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>Order #{o.id} — ${o.total.toFixed(2)} ({o.status})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {(() => {
+                const currentOrder = orders.find(o => o.id === selectedOrderToTrack) || orders[0];
+                if (!currentOrder) {
+                  return (
+                    <div className="text-center py-12 text-gray-400 font-semibold text-sm">
+                      📦 No orders found to track. Place an order in the Cart Checkout tab first!
+                    </div>
+                  );
+                }
+
+                const defaultMilestones = [
+                  { id: 1, label: 'Order Authorized', desc: 'Payment verified & escrow secured.', time: '09:15 AM', location: 'Payment Clearing Hub', icon: <ShieldCheck className="w-5 h-5" />, completed: true, isCurrent: false },
+                  { id: 2, label: 'Warehouse Packaging', desc: 'ApexTech automated sorting & gift boxing.', time: '11:40 AM', location: 'Warehouse 3', icon: <Box className="w-5 h-5" />, completed: true, isCurrent: false },
+                  { id: 3, label: 'Customs & Air Freight', desc: 'Departed export cargo hub (Flight DX-802).', time: '02:30 PM', location: 'Export Terminal', icon: <Globe className="w-5 h-5" />, completed: true, isCurrent: false },
+                  { id: 4, label: 'Regional Distribution Hub', desc: 'Sorted at regional facility for dispatch.', time: '06:15 PM', location: 'Regional Hub', icon: <Activity className="w-5 h-5" />, completed: true, isCurrent: true },
+                  { id: 5, label: 'Out for Delivery', desc: 'Courier driver in transit to your address.', time: 'Expected 04:00 PM', location: 'Local Depot', icon: <Truck className="w-5 h-5" />, completed: false, isCurrent: false },
+                  { id: 6, label: 'Delivered & Signed', desc: 'Handed over at front door.', time: 'Pending', location: 'Destination', icon: <CheckCircle2 className="w-5 h-5" />, completed: false, isCurrent: false }
+                ];
+
+                const iconMap: Record<number, React.ReactNode> = {
+                  1: <ShieldCheck className="w-5 h-5" />,
+                  2: <Box className="w-5 h-5" />,
+                  3: <Globe className="w-5 h-5" />,
+                  4: <Activity className="w-5 h-5" />,
+                  5: <Truck className="w-5 h-5" />,
+                  6: <CheckCircle2 className="w-5 h-5" />
+                };
+
+                const timelineMilestones = (currentOrder.trackingLogs && currentOrder.trackingLogs.length > 0)
+                  ? currentOrder.trackingLogs.map((log, idx) => ({
+                      id: Number(log.id) || (idx + 1),
+                      label: log.status,
+                      desc: log.description,
+                      time: log.timestamp,
+                      location: log.location,
+                      icon: iconMap[idx + 1] || <Activity className="w-5 h-5" />,
+                      completed: log.completed ?? false,
+                      isCurrent: log.isCurrent ?? false
+                    }))
+                  : defaultMilestones;
+
+                const currentStepIdx = timelineMilestones.findIndex(m => m.isCurrent) !== -1
+                  ? timelineMilestones.findIndex(m => m.isCurrent) + 1
+                  : (currentOrder.status === 'Delivered' || currentOrder.shippingStatus === 'Delivered') ? 6 : 3;
+
+                const activeShippingStatus = currentOrder.shippingStatus || currentOrder.status || 'In Transit';
+
+                return (
+                  <div className="space-y-8">
+                    {/* Live Courier Telemetry Banner */}
+                    <div className="bg-gradient-to-r from-slate-900 via-[#0F4C81] to-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                      <div className="flex flex-col md:flex-row justify-between md:items-center gap-6 relative z-10">
+                        <div className="space-y-2">
+                          <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                            <span>Live Telemetry Broadcast Active</span>
+                          </div>
+                          <h4 className="text-2xl font-black tracking-tight">Tracking #{currentOrder.trackingNumber || `DX-${currentOrder.id}-GLB`}</h4>
+                          <p className="text-xs text-blue-100/80 max-w-lg">
+                            Destination: <span className="font-semibold text-white">{currentOrder.shippingAddress}</span>
+                          </p>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl flex items-center gap-4 self-start md:self-auto min-w-[220px]">
+                          <div className="w-12 h-12 rounded-full bg-blue-500/30 flex items-center justify-center text-xl shadow-inner">
+                            🚚
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase font-bold text-blue-200">Carrier Courier</p>
+                            <p className="font-extrabold text-sm text-white">DX-Priority Express</p>
+                            <p className="text-[11px] text-emerald-300 font-bold flex items-center gap-1 mt-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>Driver GPS Connected</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Animated Progress Route Bar */}
+                      <div className="mt-8 pt-6 border-t border-white/10 space-y-2">
+                        <div className="flex justify-between text-xs font-bold text-blue-200">
+                          <span>Origin: Warehouse #3</span>
+                          <span className="text-amber-300 font-extrabold animate-pulse">
+                            {(activeShippingStatus === 'Delivered') ? '✅ Package Delivered Successfully' : `⏳ Current Status: ${activeShippingStatus}`}
+                          </span>
+                          <span>Destination: Recipient</span>
+                        </div>
+                        <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(Math.min(currentStepIdx, timelineMilestones.length || 6) / (timelineMilestones.length || 6)) * 100}%` }}
+                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                            className="h-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 rounded-full shadow-lg relative"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timeline Milestones Animation Grid */}
+                    <div className="space-y-4">
+                      <h4 className="font-extrabold text-sm text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-[#1E88E5]" />
+                        <span>Logistics Progress Timeline</span>
+                      </h4>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {timelineMilestones.map((milestone, idx) => {
+                          const isCompleted = milestone.completed || milestone.id < currentStepIdx || (activeShippingStatus === 'Delivered');
+                          const isCurrent = milestone.isCurrent || (milestone.id === currentStepIdx && activeShippingStatus !== 'Delivered');
+
+                          return (
+                            <motion.div
+                              key={milestone.id}
+                              initial={{ opacity: 0, y: 15 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: idx * 0.1 }}
+                              className={`p-5 rounded-xl border transition-all relative overflow-hidden ${
+                                isCurrent 
+                                  ? 'bg-blue-50/80 border-blue-400 shadow-md ring-2 ring-blue-500/20 scale-[1.02]' 
+                                  : isCompleted 
+                                    ? 'bg-white border-emerald-200 hover:border-emerald-300 shadow-sm' 
+                                    : 'bg-gray-50/60 border-gray-200 opacity-60'
+                              }`}
+                            >
+                              {isCurrent && (
+                                <span className="absolute top-0 right-0 bg-blue-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg tracking-wider animate-pulse">
+                                  Current Stage
+                                </span>
+                              )}
+                              {isCompleted && !isCurrent && (
+                                <span className="absolute top-2 right-2 text-emerald-600 text-[10px] font-extrabold flex items-center gap-1">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span>Done</span>
+                                </span>
+                              )}
+
+                              <div className="flex items-start gap-3.5">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition ${
+                                  isCurrent 
+                                    ? 'bg-blue-600 text-white animate-bounce' 
+                                    : isCompleted 
+                                      ? 'bg-emerald-100 text-emerald-700' 
+                                      : 'bg-gray-200 text-gray-500'
+                                }`}>
+                                  {milestone.icon}
+                                </div>
+                                <div className="space-y-1.5 flex-1 min-w-0">
+                                  <span className="text-[10px] font-extrabold text-gray-400 uppercase">Step {idx + 1} of {timelineMilestones.length}</span>
+                                  <h5 className={`font-black text-sm leading-tight ${isCurrent ? 'text-blue-950' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
+                                    {milestone.label}
+                                  </h5>
+                                  <p className="text-xs text-gray-600 leading-relaxed">
+                                    {milestone.desc}
+                                  </p>
+                                  <div className="pt-2 flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-semibold text-gray-400 border-t border-gray-100/80">
+                                    <span className="flex items-center gap-1 text-gray-500">
+                                      <Clock className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                      <span>{milestone.time}</span>
+                                    </span>
+                                    {milestone.location && (
+                                      <span className="flex items-center gap-1 bg-gray-100/90 px-1.5 py-0.5 rounded text-gray-700 font-extrabold border border-gray-200/50">
+                                        <MapPin className="w-2.5 h-2.5 text-emerald-600 flex-shrink-0" />
+                                        <span className="truncate max-w-[140px]">{milestone.location}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Package Item Summary within tracked order */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-3">
+                      <h5 className="font-extrabold text-xs text-gray-800 uppercase tracking-wider">Items in this Cargo Shipment ({currentOrder.items.length})</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {currentOrder.items.map((item, i) => (
+                          <div key={i} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center gap-3">
+                            <img src={item.image} alt={item.productTitle} className="w-12 h-12 object-cover rounded bg-gray-100" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-xs text-gray-900 line-clamp-1">{item.productTitle}</p>
+                              <p className="text-[10px] text-gray-500">Qty: {item.quantity} | Price: ${item.price.toFixed(2)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -1041,7 +1360,7 @@ export default function PortalPages({
                         <span className="px-2 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded font-bold text-[10px] uppercase">
                           {o.status}
                         </span>
-                        {o.status === 'Pending' && (
+                        {(o.status === 'Pending' || o.status === 'Processing') && (
                           <button
                             onClick={() => {
                               setOrders(prev => prev.map(order => {
@@ -1049,6 +1368,15 @@ export default function PortalPages({
                                   return { 
                                     ...order, 
                                     status: 'Shipped',
+                                    shippingStatus: 'In Transit',
+                                    trackingLogs: [
+                                      { id: 1, status: 'Order Authorized', timestamp: order.date, location: 'Escrow Clearing', description: 'Order verified.', completed: true },
+                                      { id: 2, status: 'Warehouse Packaging', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), location: 'Supplier Facility', description: 'Packed and labeled.', completed: true },
+                                      { id: 3, status: 'Departed Facility', timestamp: 'Just Now', location: 'Dispatch Terminal', description: 'Handed over to priority cargo carrier.', completed: true },
+                                      { id: 4, status: 'In Transit', timestamp: 'Just Now', location: 'National Logistics Hub', description: 'Dispatched by priority cargo carrier.', completed: true, isCurrent: true },
+                                      { id: 5, status: 'Out for Delivery', timestamp: 'Expected Tomorrow', location: 'Local Delivery Depot', description: 'Scheduled for local delivery.', completed: false },
+                                      { id: 6, status: 'Delivered', timestamp: 'Pending', location: order.shippingAddress, description: 'Signature required.', completed: false }
+                                    ],
                                     trackingSteps: [
                                       { status: 'Order Placed', date: new Date().toISOString().split('T')[0], location: 'System', description: 'Order verified.' },
                                       { status: 'In Transit', date: new Date().toISOString().split('T')[0], location: 'NYC Distribution Hub', description: 'Dispatched by priority cargo carrier.' }

@@ -450,8 +450,14 @@ export default function Header({
             })}
           </div>
 
-          <div className="py-2 text-[11px] text-gray-500 font-medium">
-            🔥 Super Deal: Apply coupon <code className="bg-amber-100 text-amber-800 px-1 py-0.5 rounded font-bold">APEX10</code> for 10% off items!
+          <div className="py-2 text-[11px] text-gray-500 font-medium flex items-center justify-between gap-4">
+            <span>🔥 Super Deal: Apply coupon <code className="bg-amber-100 text-amber-800 px-1 py-0.5 rounded font-bold">APEX10</code> for 10% off items!</span>
+            <button
+              onClick={() => onNavigate('sample-users')}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-2.5 py-1 rounded-md font-extrabold shadow-sm transition flex items-center gap-1.5 cursor-pointer animate-pulse text-[11px]"
+            >
+              <span>🔑 Test Accounts Hub</span>
+            </button>
           </div>
         </div>
       </div>

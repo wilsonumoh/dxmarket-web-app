@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Key, KeyRound, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Key, KeyRound, AlertCircle, CheckCircle, ShieldCheck, Sparkles } from 'lucide-react';
+import { MOCK_SAMPLE_USERS } from '../dummyData';
+import { SampleUserCredential } from '../types';
 
 interface AuthPagesProps {
   initialView: string; // 'login' | 'register' | 'forgot' | 'verify' | '2fa'
   onNavigate: (view: string) => void;
-  onSuccess: (name: string, email: string) => void;
+  onSuccess: (name: string, email: string, role?: string, targetView?: string) => void;
 }
 
 export default function AuthPages({
@@ -13,6 +15,7 @@ export default function AuthPages({
   onSuccess,
 }: AuthPagesProps) {
   const [currentScreen, setCurrentScreen] = useState(initialView);
+  const [selectedTestUser, setSelectedTestUser] = useState<SampleUserCredential | null>(null);
   
   // Form fields
   const [email, setEmail] = useState('');
@@ -53,7 +56,9 @@ export default function AuthPages({
     }
     setSuccess('Email successfully verified! Log in to secure your account.');
     setTimeout(() => {
-      onSuccess(name || 'Demo Customer', email || 'demo@dxmarket.com');
+      const targetRole = selectedTestUser ? selectedTestUser.role : 'customer';
+      const targetView = selectedTestUser ? selectedTestUser.targetView : 'customer-dashboard';
+      onSuccess(selectedTestUser ? selectedTestUser.name : (name || 'Demo Customer'), email || 'demo@dxmarket.com', targetRole, targetView);
     }, 1500);
   };
 
@@ -63,7 +68,9 @@ export default function AuthPages({
       setError('Multi-factor authentication key must be 6 digits.');
       return;
     }
-    onSuccess('Demo Customer', email || 'customer@dxmarket.com');
+    const targetRole = selectedTestUser ? selectedTestUser.role : 'customer';
+    const targetView = selectedTestUser ? selectedTestUser.targetView : 'customer-dashboard';
+    onSuccess(selectedTestUser ? selectedTestUser.name : 'Demo Customer', email || 'customer@dxmarket.com', targetRole, targetView);
   };
 
   const handleForgot = (e: React.FormEvent) => {
@@ -116,7 +123,72 @@ export default function AuthPages({
 
         {/* 1. LOGIN SCREEN */}
         {currentScreen === 'login' && (
-          <form onSubmit={handleLogin} className="space-y-4">
+          <>
+            <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-200 rounded-xl p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black text-[#0F4C81] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-purple-600 animate-spin" />
+                  <span>One-Click Test Accounts</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('sample-users')}
+                  className="text-[10px] text-purple-700 font-extrabold hover:underline cursor-pointer"
+                >
+                  View Full Test Hub 🚀
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-600">
+                Click any profile below to auto-fill login details and switch roles instantly for evaluation:
+              </p>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {MOCK_SAMPLE_USERS.map((user, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTestUser(user);
+                      setEmail(user.email);
+                      setPassword(user.password);
+                      setError('');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition cursor-pointer flex items-center gap-2 ${
+                      selectedTestUser?.email === user.email
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-[1.02]'
+                        : 'bg-white text-gray-800 border-gray-200 hover:border-blue-400 hover:bg-blue-50/50'
+                    }`}
+                  >
+                    <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[10px] font-black uppercase line-clamp-1 ${selectedTestUser?.email === user.email ? 'text-blue-200' : 'text-gray-400'}`}>
+                        {user.role}
+                      </p>
+                      <p className="text-xs font-bold line-clamp-1">{user.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedTestUser && (
+                <div className="pt-2 border-t border-blue-200/60 flex items-center justify-between gap-2">
+                  <div className="text-[11px] text-gray-700 font-semibold truncate">
+                    Ready: <span className="font-bold text-[#0F4C81]">{selectedTestUser.name}</span> ({selectedTestUser.roleTitle})
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSuccess(selectedTestUser.name, selectedTestUser.email, selectedTestUser.role, selectedTestUser.targetView);
+                    }}
+                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-black shadow transition flex items-center gap-1 cursor-pointer animate-pulse whitespace-nowrap"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Instant Login ⚡</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4 pt-2">
             <div className="space-y-1">
               <label className="text-[11px] uppercase font-bold text-gray-400">Email Address</label>
               <div className="relative">
@@ -174,6 +246,7 @@ export default function AuthPages({
               </button>
             </p>
           </form>
+          </>
         )}
 
         {/* 2. REGISTER SCREEN */}

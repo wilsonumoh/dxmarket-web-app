@@ -1,4 +1,4 @@
-import { Product, MerchantStore, Supplier, Order, Lead, BlogPost, AuditLog, SystemConfig } from './types';
+import { Product, MerchantStore, Supplier, Order, Lead, BlogPost, AuditLog, SystemConfig, SampleUserCredential } from './types';
 
 export const INITIAL_SYSTEM_CONFIG: SystemConfig = {
   commissionRate: 8.5,
@@ -12,12 +12,13 @@ export const INITIAL_SYSTEM_CONFIG: SystemConfig = {
   heroDescription: 'DXMARKET connects premium suppliers, verified cross-border merchants, and smart automated cargo logistics to serve millions of global customers.',
   footerNote: '© 2026 DXMARKET Inc. All Rights Reserved. Manufactured and certified in modern cloud native containers.',
   appMenu: [
-    { label: 'Flash Sales', view: 'products' },
+    { label: 'Flash Sales', view: 'flash-sales' },
     { label: 'Merchant Stores', view: 'merchant-stores' },
     { label: 'Market Blog', view: 'blog' },
     { label: 'FAQs', view: 'faq' },
     { label: 'Our Story', view: 'about' },
-    { label: 'Contact Support', view: 'contact' }
+    { label: 'Contact Support', view: 'contact' },
+    { label: '🚀 Sample Users & Login Hub', view: 'sample-users' }
   ],
   heroBanners: [
     {
@@ -501,14 +502,51 @@ export const MOCK_ORDERS: Order[] = [
     ],
     total: 189.99,
     status: 'Shipped',
+    shippingStatus: 'In Transit',
     date: '2026-06-25',
     shippingAddress: '42 Wall Street, Apt 12B, New York, NY 10005',
     paymentMethod: 'Wallet Balance',
     trackingNumber: 'DX-718293-USA',
+    trackingLogs: [
+      { id: 1, status: 'Order Authorized', timestamp: '2026-06-25 10:00 AM', location: 'Payment Gateway Clearing', description: 'Order successfully created and escrow secured.', completed: true },
+      { id: 2, status: 'Warehouse Packaging', timestamp: '2026-06-25 02:30 PM', location: 'ApexTech Warehouse #3, CA', description: 'Automated sorting, custom gift boxing, and shipping label attached.', completed: true },
+      { id: 3, status: 'Departed Facility', timestamp: '2026-06-26 08:00 AM', location: 'San Francisco Hub, CA', description: 'Loaded onto air freight Line DX-802.', completed: true },
+      { id: 4, status: 'In Transit', timestamp: '2026-06-26 06:15 PM', location: 'New York Regional Sort Facility, NY', description: 'Package arrived at regional sorting center. Awaiting courier dispatch.', completed: true, isCurrent: true },
+      { id: 5, status: 'Out for Delivery', timestamp: 'Expected 08:30 AM', location: 'Manhattan Courier Fleet, NY', description: 'Driver allocated for last-mile residential drop-off.', completed: false },
+      { id: 6, status: 'Delivered', timestamp: 'Pending', location: '42 Wall Street, Apt 12B, New York, NY', description: 'Recipient signature required upon arrival.', completed: false }
+    ],
     trackingSteps: [
       { status: 'Order Placed', date: '2026-06-25 10:00', location: 'System', description: 'Order successfully created and payment verified.' },
       { status: 'Fulfillment Processing', date: '2026-06-25 14:30', location: 'ApexTech Warehouse 3', description: 'Merchant sorted, custom packed, and applied logistics label.' },
       { status: 'In Transit', date: '2026-06-26 08:00', location: 'NYC Distribution Hub', description: 'Handed over to DXMARKET priority courier network.' }
+    ]
+  },
+  {
+    id: 'ord-1004',
+    customerId: 'cust-1',
+    customerName: 'Marcus Vance',
+    customerEmail: 'marcus.vance@gmail.com',
+    items: [
+      { productId: 'p-2', productTitle: 'ChronoMaster Valjoux Automatic Watch', price: 1250.00, quantity: 1, image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=100&q=80', merchantId: 'm-2' }
+    ],
+    total: 1250.00,
+    status: 'Shipped',
+    shippingStatus: 'Out for Delivery',
+    date: '2026-06-27',
+    shippingAddress: '42 Wall Street, Apt 12B, New York, NY 10005',
+    paymentMethod: 'Direct Bank Escrow',
+    trackingNumber: 'DX-990412-USA',
+    trackingLogs: [
+      { id: 1, status: 'Order Authorized', timestamp: '2026-06-26 08:00 AM', location: 'Escrow Vault Clearing', description: 'High-value timepiece transaction verified & insured.', completed: true },
+      { id: 2, status: 'Warehouse Packaging', timestamp: '2026-06-26 11:30 AM', location: 'Geneva-NYC Secure Depot', description: 'Tamper-evident serial tagging and luxury presentation case sealed.', completed: true },
+      { id: 3, status: 'Departed Facility', timestamp: '2026-06-26 06:00 PM', location: 'JFK Armored Air Cargo Hub, NY', description: 'Received at high-value security transit terminal.', completed: true },
+      { id: 4, status: 'In Transit', timestamp: '2026-06-27 04:15 AM', location: 'Lower Manhattan Security Depot, NY', description: 'Transferred to armored urban courier vehicle.', completed: true },
+      { id: 5, status: 'Out for Delivery', timestamp: '2026-06-27 08:15 AM', location: 'Manhattan Financial District Fleet #09', description: 'Armored courier vehicle is 3 stops away from destination.', completed: true, isCurrent: true },
+      { id: 6, status: 'Delivered', timestamp: 'Expected 11:30 AM', location: '42 Wall Street, Apt 12B, New York, NY', description: 'Photo ID & biometric signature required upon receipt.', completed: false }
+    ],
+    trackingSteps: [
+      { status: 'Order Authorized', date: '2026-06-26 08:00', location: 'Escrow Vault', description: 'Verified.' },
+      { status: 'Out for Delivery', date: '2026-06-27 08:15', location: 'Manhattan Fleet #09', description: 'Armored courier vehicle 3 stops away.' }
     ]
   },
   {
@@ -521,10 +559,19 @@ export const MOCK_ORDERS: Order[] = [
     ],
     total: 90.00,
     status: 'Delivered',
+    shippingStatus: 'Delivered',
     date: '2026-06-18',
     shippingAddress: '42 Wall Street, Apt 12B, New York, NY 10005',
     paymentMethod: 'Credit Card (Visa ending in 4242)',
     trackingNumber: 'DX-112023-USA',
+    trackingLogs: [
+      { id: 1, status: 'Order Authorized', timestamp: '2026-06-18 09:15 AM', location: 'Payment Gateway Clearing', description: 'Order successfully authorized and payment verified.', completed: true },
+      { id: 2, status: 'Warehouse Packaging', timestamp: '2026-06-18 01:20 PM', location: 'Lumière Bio-Labs Storage, WA', description: 'Temperature-controlled botanical packaging completed.', completed: true },
+      { id: 3, status: 'Departed Facility', timestamp: '2026-06-19 06:00 AM', location: 'Seattle Air Hub, WA', description: 'In transit via express cargo network.', completed: true },
+      { id: 4, status: 'In Transit', timestamp: '2026-06-19 09:30 PM', location: 'JFK International Hub, NY', description: 'Customs cleared and transferred to local metropolitan carrier.', completed: true },
+      { id: 5, status: 'Out for Delivery', timestamp: '2026-06-20 07:45 AM', location: 'Manhattan Courier Van #44', description: 'Courier driver en route to destination address.', completed: true },
+      { id: 6, status: 'Delivered', timestamp: '2026-06-20 03:40 PM', location: '42 Wall Street, Apt 12B, NY', description: 'Left with resident at front door. Signed by M. Vance.', completed: true, isCurrent: true }
+    ],
     trackingSteps: [
       { status: 'Order Placed', date: '2026-06-18 09:15', location: 'System', description: 'Order successfully authorized.' },
       { status: 'Delivered', date: '2026-06-20 15:40', location: 'Front Door', description: 'Left with resident. Signed by M. Vance.' }
@@ -540,10 +587,24 @@ export const MOCK_ORDERS: Order[] = [
       { productId: 'p-5', productTitle: 'Hyaluronic Botanical Radiance Serum', price: 45.00, quantity: 1, image: 'https://images.unsplash.com/photo-1608248597481-496100c8c836?auto=format&fit=crop&w=100&q=80', merchantId: 'm-3' }
     ],
     total: 265.00,
-    status: 'Pending',
+    status: 'Processing',
+    shippingStatus: 'Processing',
     date: '2026-06-26',
     shippingAddress: '15 Lombard Street, London EC3V 9AM, United Kingdom',
-    paymentMethod: 'Saved Mastercard ending in 9988'
+    paymentMethod: 'Saved Mastercard ending in 9988',
+    trackingNumber: 'DX-889012-UK',
+    trackingLogs: [
+      { id: 1, status: 'Order Authorized', timestamp: '2026-06-26 11:30 AM', location: 'Global Escrow Clearing', description: 'Payment verified via saved Mastercard ending in 9988.', completed: true },
+      { id: 2, status: 'Warehouse Packaging', timestamp: '2026-06-26 03:15 PM', location: 'Vogue London Atelier, UK', description: 'Garment steaming, luxury garment bagging, and quality check in progress.', completed: true, isCurrent: true },
+      { id: 3, status: 'Departed Facility', timestamp: 'Scheduled', location: 'London Heathrow Logistics Terminal', description: 'Awaiting scheduled courier pickup.', completed: false },
+      { id: 4, status: 'In Transit', timestamp: 'Pending', location: 'UK National Distribution Grid', description: 'Inter-city linehaul transfer.', completed: false },
+      { id: 5, status: 'Out for Delivery', timestamp: 'Pending', location: 'Central London Courier Depot', description: 'Final mile dispatch.', completed: false },
+      { id: 6, status: 'Delivered', timestamp: 'Pending', location: '15 Lombard Street, London, UK', description: 'Handed over to concierge.', completed: false }
+    ],
+    trackingSteps: [
+      { status: 'Order Authorized', date: '2026-06-26 11:30', location: 'Escrow Clearing', description: 'Payment verified.' },
+      { status: 'Processing', date: '2026-06-26 15:15', location: 'Vogue Atelier UK', description: 'Garment preparation in progress.' }
+    ]
   }
 ];
 
@@ -552,4 +613,91 @@ export const MOCK_AUDIT_LOGS: AuditLog[] = [
   { id: 'log-2', userId: 'admin-1', userName: 'Super Admin Eleanor', userRole: 'superadmin', action: 'Approved Supplier: EuroTex Organic Mills', timestamp: '2026-06-26 18:22:10', ipAddress: '192.168.1.55', status: 'Success' },
   { id: 'log-3', userId: 'm-1', userName: 'Alex Mercer (ApexTech)', userRole: 'merchant', action: 'Attempted to upload blacklisted product wordings', timestamp: '2026-06-26 14:02:11', ipAddress: '172.56.21.90', status: 'Failed' },
   { id: 'log-4', userId: 'admin-2', userName: 'Admin Marcus', userRole: 'admin', action: 'Suspended user account account spammer@trashmail.com', timestamp: '2026-06-26 11:30:00', ipAddress: '192.168.1.58', status: 'Success' }
+];
+
+export const MOCK_SAMPLE_USERS: SampleUserCredential[] = [
+  {
+    role: 'customer',
+    roleTitle: 'Customer Account',
+    name: 'Marcus Vance',
+    email: 'marcus.vance@gmail.com',
+    password: 'dxcustomer2026',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
+    highlights: ['Wallet Balance: $350.00', '1,200 Loyalty Points', 'Live Order Tracking (#ord-1001)', 'Saved Addresses & Wishlist'],
+    testScenario: 'Test purchasing items, applying coupons, live timeline order tracking, and checking wallet balances.',
+    targetView: 'customer-dashboard'
+  },
+  {
+    role: 'merchant',
+    roleTitle: 'Vendor Store (ApexTech)',
+    name: 'Alex Mercer',
+    email: 'alex@apextech.com',
+    password: 'dxmerchant2026',
+    avatar: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    highlights: ['Store Balance: $8,450.00', '14 Active Tech Products', '520 Completed Orders', 'Active Coupon: APEX10'],
+    testScenario: 'Test uploading new product listings, publishing promotional coupon codes, and reviewing sales analytics.',
+    targetView: 'merchant-dashboard'
+  },
+  {
+    role: 'merchant',
+    roleTitle: 'Vendor Store (Vogue Essentials)',
+    name: 'Sophia Lin',
+    email: 'sophia@vogueessentials.com',
+    password: 'dxmerchant2026',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    highlights: ['Store Balance: $14,200.50', '32 Fashion Products', '1,150 Completed Orders', 'Active Coupon: VOGUE20'],
+    testScenario: 'Test fashion catalog management, inventory levels, and order fulfillment processing.',
+    targetView: 'merchant-dashboard'
+  },
+  {
+    role: 'supplier',
+    roleTitle: 'Logistics Supplier',
+    name: 'TransPacific Electronics',
+    email: 'logistics@transpacific.com',
+    password: 'dxsupplier2026',
+    avatar: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
+    highlights: ['15,200 Inventories Supplied', '2 Active Cargo Shipments', '4.7 Logistics Rating', 'Direct B2B Supply Stream'],
+    testScenario: 'Test staging raw materials, authorizing cargo transport manifests, and tracking shipment delivery status.',
+    targetView: 'supplier-dashboard'
+  },
+  {
+    role: 'sales',
+    roleTitle: 'Sales CRM Specialist',
+    name: 'Fiona Gallagher',
+    email: 'fiona.sales@dxmarket.com',
+    password: 'dxsales2026',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    highlights: ['3 Active Merchant Leads', 'Outbound B2B Pipeline', 'Lead Qualification Tools', 'Commission Tracking'],
+    testScenario: 'Test adding new prospective merchant leads, updating follow-up dates, and managing CRM deals.',
+    targetView: 'sales-dashboard'
+  },
+  {
+    role: 'admin',
+    roleTitle: 'Platform Moderator',
+    name: 'Marcus Admin',
+    email: 'marcus.admin@dxmarket.com',
+    password: 'dxadmin2026',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    highlights: ['Content Moderation', 'Product & Store Approvals', 'Menu & Banner CMS', 'User Governance'],
+    testScenario: 'Test approving pending product listings (e.g. Titan Kettlebells), editing site banners, and managing catalogs.',
+    targetView: 'admin-dashboard'
+  },
+  {
+    role: 'superadmin',
+    roleTitle: 'Super Admin Executive',
+    name: 'Eleanor Vance',
+    email: 'eleanor.super@dxmarket.com',
+    password: 'dxsuper2026',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&h=150&q=80',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
+    highlights: ['8.5% Commission Rate Control', 'Financial Ledger Audits', 'Full System Settings', 'Security Audit Logs'],
+    testScenario: 'Test modifying global marketplace commission rates, inspecting security audit trails, and platform settings.',
+    targetView: 'superadmin-dashboard'
+  }
 ];

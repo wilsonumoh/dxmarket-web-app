@@ -111,6 +111,18 @@ export interface OrderItem {
   merchantId: string;
 }
 
+export type ShippingStatus = 'Pending' | 'Processing' | 'In Transit' | 'Out for Delivery' | 'Delivered' | 'Exception' | string;
+
+export interface TrackingLog {
+  id?: string | number;
+  status: string;
+  timestamp: string;
+  location: string;
+  description: string;
+  completed?: boolean;
+  isCurrent?: boolean;
+}
+
 export interface Order {
   id: string;
   customerId: string;
@@ -118,11 +130,13 @@ export interface Order {
   customerEmail: string;
   items: OrderItem[];
   total: number;
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled' | string;
+  shippingStatus?: ShippingStatus;
   date: string;
   shippingAddress: string;
   paymentMethod: string;
   trackingNumber?: string;
+  trackingLogs?: TrackingLog[];
   trackingSteps?: {
     status: string;
     date: string;
@@ -189,4 +203,18 @@ export interface SystemConfig {
     subtitle: string;
     imageUrl: string;
   };
+}
+
+export interface SampleUserCredential {
+  role: UserRole;
+  roleTitle: string;
+  name: string;
+  email: string;
+  password: string;
+  avatar: string;
+  badgeColor: string;
+  highlights: string[];
+  testScenario: string;
+  accessScope?: string;
+  targetView: string;
 }
